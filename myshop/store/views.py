@@ -65,22 +65,24 @@ def user_login(request):
         form = LoginForm()
     return render(request, 'login.html', {'form': form})
 
+# views.py
 @login_required(login_url='login')
 def home(request):
     query = request.GET.get('q')
     products_by_category = {}
     categories = Category.objects.all()
 
+    if query:
+        search_results = Product.objects.filter(Q(name__icontains=query) | Q(description__icontains=query))
+        products_by_category['Search'] = search_results
+
     for category in categories:
         products = Product.objects.filter(category=category)
         products_by_category[category.name] = products
 
-    if query:
-        products = Product.objects.filter(Q(name__icontains=query) | Q(description__icontains=query))
-        products_by_category['Search Results'] = products
+    return render(request, 'home.html', {'products_by_category': products_by_category, 'query': query})
 
-    return render(request, 'home.html', {'products_by_category': products_by_category})
-    
+
 @login_required(login_url='login')
 def user_logout(request):
     logout(request)
